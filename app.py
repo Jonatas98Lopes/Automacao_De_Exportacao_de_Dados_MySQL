@@ -4,7 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from time import sleep
 from random import randint
-
+import openpyxl
 
 def pausar():
   """
@@ -22,7 +22,7 @@ def repousar():
 
 # 1. ACESSO AO GOOGLE DRIVE E DOWNLOAD DA PLANILHA:
 
-LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
+""" LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
 
 browser = GoogleChrome()
 driver, wait = browser.get_driver(), browser.get_wait()
@@ -38,4 +38,48 @@ pausar()
 botoes_selecao = driver.find_elements(By.XPATH, '//div[@aria-label="Fazer download"]')
 botoes_selecao[2].click()
 repousar()
+driver.quit() """
 
+
+# 2. EXTRAINDO DADOS DA PLANILHA:
+
+workbook = openpyxl.load_workbook('Base de dados .xlsx')
+sheet_data = workbook['data']
+linha = 2
+
+# Campos da planilha:
+while linha <= sheet_data.max_row:
+    
+    dados_planiha = {
+        "contrato" : sheet_data[f'A{linha}'].value,
+        "nome" : sheet_data[f'B{linha}'].value,
+        "endereco" : sheet_data[f'C{linha}'].value,
+        "numero" : sheet_data[f'D{linha}'].value,
+        "complemento" : sheet_data[f'E{linha}'].value,
+        "bairro" : sheet_data[f'F{linha}'].value,
+        "cidade" : sheet_data[f'G{linha}'].value,
+        "regional" : sheet_data[f'H{linha}'].value,
+        "tipo_do_contrato" : sheet_data[f'I{linha}'].value,
+        "plano" : sheet_data[f'J{linha}'].value,
+        "adicionais" : sheet_data[f'K{linha}'].value,
+        "voz" : sheet_data[f'L{linha}'].value,
+        "valor_voz" : sheet_data[f'M{linha}'].value,
+        "valor_do_plano" : sheet_data[f'N{linha}'].value,
+        "valor_adicionais" : sheet_data[f'O{linha}'].value,
+        "valor_liquido_do_contrato" : sheet_data[f'P{linha}'].value,
+        "status" : sheet_data[f'Q{linha}'].value,
+        "data_conexao" : sheet_data[f'R{linha}'].value,
+        "vendedor" : sheet_data[f'S{linha}'].value,
+        "canal_de_vendas" : sheet_data[f'T{linha}'].value,
+        "codigo_os" : sheet_data[f'U{linha}'].value,
+        "area_de_despacho" : sheet_data[f'V{linha}'].value,
+        "equipe" : sheet_data[f'W{linha}'].value,
+        "operadora" : sheet_data[f'X{linha}'].value
+
+    }
+    
+    for chave, valor in dados_planiha.items():
+        print(f"{chave}: {valor}")
+    linha += 1
+    
+    
