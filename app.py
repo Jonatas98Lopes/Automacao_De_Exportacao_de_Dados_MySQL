@@ -1,10 +1,11 @@
 from inicializar import GoogleChrome
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from time import sleep
 from random import randint
 import openpyxl
+import mysql.connector
+
 
 def pausar():
   """
@@ -19,6 +20,8 @@ def repousar():
   Para o funcionamento do programa num intervalo de 20 a 25 segundos.
   """
   sleep(randint(20, 25))
+
+
 
 # 1. ACESSO AO GOOGLE DRIVE E DOWNLOAD DA PLANILHA:
 
@@ -46,6 +49,15 @@ driver.quit() """
 workbook = openpyxl.load_workbook('Base de dados .xlsx')
 sheet_data = workbook['data']
 linha = 2
+
+
+""" CONEXAO = mysql.connector.connect(
+  user='root',
+  password='12345678',
+  host='localhost',
+  database='Importacao_MySQL'
+) """
+
 
 # Campos da planilha:
 while linha <= sheet_data.max_row:
@@ -79,7 +91,8 @@ while linha <= sheet_data.max_row:
     }
     
     for chave, valor in dados_planiha.items():
+        if valor is None and chave not in campos_nulos:
+            campos_nulos.append(chave)
         print(f"{chave}: {valor}")
     linha += 1
-    
     

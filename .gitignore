@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 /virtual/
-virtual/  
+virtual/ 
+Base de dados .xlsx
+.~lock.Base de dados .xlsx#
+.~lock.Base de dados .xlsx# 
 # C extensions
 *.so
 
