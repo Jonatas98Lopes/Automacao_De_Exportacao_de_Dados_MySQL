@@ -59,10 +59,10 @@ CONEXAO = mysql.connector.connect(
 ) 
 cursor = CONEXAO.cursor()
 
+novos_contratos = []
 registros_atualizados = {}
-registros_excluidos = {}
 
-# Campos da planilha:
+# ATUALIZAÇÃO DE DADOS ALTERADOS:
 while linha <= sheet_data.max_row:
     
     dados_planiha = {
@@ -108,12 +108,20 @@ while linha <= sheet_data.max_row:
                     SET %s = %s
                     WHERE contrato = %s
                 """, (chave, valor, dados_planiha["contrato"]))
+                CONEXAO.commit()
         if registro_anterior != cursor.execute("SELECT * FROM basededados"):
             registros_atualizados[registro_anterior] = cursor.execute("""
                     SELECT * FROM basededados
                     WHERE contrato = %s""", (dados_planiha["contrato"],))
     else:
-        pass
+       novos_contratos.append(dados_planiha["contrato"])
     
     linha += 1
-    
+
+linha = 2
+registros_excluidos = []
+for contrato in cursor.execute("SELECT contrato FROM basededados"):
+    if contrato not in novos_contratos:
+        registros_excluidos.append(contrato)
+        cursor.execute("DELETE FROM basededados WHERE contrato = %s", (contrato,))
+        CONEXAO.commit()        
