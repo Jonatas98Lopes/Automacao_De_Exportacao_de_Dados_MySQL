@@ -134,3 +134,15 @@ for contrato in cursor.execute("SELECT contrato FROM basededados"):
         registros_excluidos.append(contrato)
         cursor.execute("DELETE FROM basededados WHERE contrato = %s", (contrato,))
         CONEXAO.commit()        
+
+print('Registros atualizados: ' + 20 * '=')
+for chave, valor in registros_atualizados.items():
+    print(f"Registro anterior: {chave}\n\n")
+    print(f"Registro atualizado: {valor}\n\n")
+    print(50 * '-')
+
+print('\n\nRegistros excluídos: ' + 20 * '=')
+for item in registros_excluidos:
+    print(f"Registro excluído: {item}\n\n")
+    print(50 * "-")
+
