@@ -51,13 +51,16 @@ sheet_data = workbook['data']
 linha = 2
 
 
-""" CONEXAO = mysql.connector.connect(
+CONEXAO = mysql.connector.connect(
   user='root',
   password='12345678',
   host='localhost',
   database='Importacao_MySQL'
-) """
+) 
+cursor = CONEXAO.cursor()
 
+registros_atualizados = {}
+registros_excluidos = {}
 
 # Campos da planilha:
 while linha <= sheet_data.max_row:
@@ -90,9 +93,27 @@ while linha <= sheet_data.max_row:
 
     }
     
-    for chave, valor in dados_planiha.items():
-        if valor is None and chave not in campos_nulos:
-            campos_nulos.append(chave)
-        print(f"{chave}: {valor}")
+    # SE ALGUM CONTRATO NÃO ESTIVER NA COLUNA DE BANCO DE DADOS:
+    if dados_planiha["contrato"] in cursor.execute("SELECT contrato FROM basededados"):
+        # EM CASO, DE MUDANÇA, VAMOS EXIBIR O REGISTRO ANTERIOR
+        registro_anterior = cursor.execute("""
+            SELECT * FROM basededados 
+            WHERE contrato = %s""", (dados_planiha["contrato"],)) 
+        # VAMOS VERIFICAR SE ALGUM CAMPO DAQUELA LINHA FOI ALTERADO
+        for chave, valor in dados_planiha.items(): 
+           if chave == "contrato": continue
+           if valor != cursor.execute("SELECT %s FROM basedados WHERE %s", (chave, dados_planiha["contrato"])):
+                cursor.execute("""
+                    UPDATE basededados
+                    SET %s = %s
+                    WHERE contrato = %s
+                """, (chave, valor, dados_planiha["contrato"]))
+        if registro_anterior != cursor.execute("SELECT * FROM basededados"):
+            registros_atualizados[registro_anterior] = cursor.execute("""
+                    SELECT * FROM basededados
+                    WHERE contrato = %s""", (dados_planiha["contrato"],))
+    else:
+        pass
+    
     linha += 1
     
