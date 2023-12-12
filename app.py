@@ -114,11 +114,20 @@ while linha <= sheet_data.max_row:
                     SELECT * FROM basededados
                     WHERE contrato = %s""", (dados_planiha["contrato"],))
     else:
-       novos_contratos.append(dados_planiha["contrato"])
-    
+       # REGISTROS NOVOS, VAMOS GUARDÁ-LOS PARA VERIFICAR E DELETAR REGISTROS EXCLUÍDOS:
+        novos_contratos.append(dados_planiha["contrato"])
+        query = "INSERT INTO basededados VALUES("
+        for valor in dados_planiha.values():
+            if valor is None:
+               query += 'NULL, '
+            else:
+               query += f'{valor}, '
+        new_query = query[:len(query) - 1] + ')'
+           
     linha += 1
 
-linha = 2
+
+# REGISTROS EXCLUIDOS
 registros_excluidos = []
 for contrato in cursor.execute("SELECT contrato FROM basededados"):
     if contrato not in novos_contratos:
