@@ -21,7 +21,7 @@ cursor.execute('''
       regional VARCHAR(30) ,
       tipo_do_contrato VARCHAR(255) NOT NULL,
       plano VARCHAR(255) NOT NULL,
-      adicionais VARCHAR(255),
+      adicionais TEXT,
       voz VARCHAR(255),
       valor_voz DECIMAL(10, 2),
       valor_do_plano DECIMAL(10, 2) NOT NULL,
@@ -33,8 +33,7 @@ cursor.execute('''
       canal_de_vendas VARCHAR(255) NOT NULL,
       codigo_os INT NOT NULL,
       area_de_despacho VARCHAR(255) NOT NULL,
-      equipe VARCHAR(255),
+      equipe TEXT,
       operadora VARCHAR(255) NOT NULL
   );
-
 ''')

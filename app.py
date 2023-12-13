@@ -5,7 +5,8 @@ from time import sleep
 from random import randint
 import openpyxl
 import mysql.connector
-
+from datetime import datetime
+import pdb
 
 def pausar():
   """
@@ -20,6 +21,28 @@ def repousar():
   Para o funcionamento do programa num intervalo de 20 a 25 segundos.
   """
   sleep(randint(20, 25))
+
+def remove_aspas_no_meio_da_string(dado):
+      novo_dado = ""
+      contador = 0
+      for caractere in dado:
+          if caractere == "'": 
+              novo_dado += ' '
+          else:
+              novo_dado += caractere
+      return f"'{novo_dado.strip()}'"    
+
+            
+
+def converte_string_em_data(string):
+    substrings = string.split('-')
+    dia_hora = substrings.pop(2)
+    substrings.append(dia_hora[:2])
+    hora = dia_hora.split()[1]
+    hora = hora.split(':')
+    for dado in hora: substrings.append(dado)
+    
+    return datetime(*[int(dado) for dado in substrings])
 
 
 
@@ -44,6 +67,14 @@ repousar()
 driver.quit() """
 
 
+CONEXAO = mysql.connector.connect(
+  user='root',
+  password='12345678',
+  host='localhost',
+  database='Importacao_MySQL'
+) 
+
+CURSOR = CONEXAO.cursor()
 # 2. EXTRAINDO DADOS DA PLANILHA:
 
 workbook = openpyxl.load_workbook('Base de dados .xlsx')
@@ -51,21 +82,14 @@ sheet_data = workbook['data']
 linha = 2
 
 
-CONEXAO = mysql.connector.connect(
-  user='root',
-  password='12345678',
-  host='localhost',
-  database='Importacao_MySQL'
-) 
-cursor = CONEXAO.cursor()
 
-novos_contratos = []
+contratos = []
 registros_atualizados = {}
 
 # ATUALIZAÇÃO DE DADOS ALTERADOS:
 while linha <= sheet_data.max_row:
     
-    dados_planiha = {
+    dados_planilha = {
         "contrato" : sheet_data[f'A{linha}'].value,
         "nome" : sheet_data[f'B{linha}'].value,
         "endereco" : sheet_data[f'C{linha}'].value,
@@ -94,51 +118,80 @@ while linha <= sheet_data.max_row:
     }
     
     # SE ALGUM CONTRATO NÃO ESTIVER NA COLUNA DE BANCO DE DADOS:
-    if dados_planiha["contrato"] in cursor.execute("SELECT contrato FROM basededados"):
+    query = "SELECT contrato FROM basededados"
+    CURSOR.execute(query)
+    resultados = CURSOR.fetchall()
+    if any(int(dados_planilha["contrato"]) in tupla for tupla in resultados):
         # EM CASO, DE MUDANÇA, VAMOS EXIBIR O REGISTRO ANTERIOR
-        registro_anterior = cursor.execute("""
-            SELECT * FROM basededados 
-            WHERE contrato = %s""", (dados_planiha["contrato"],)) 
+        query = "SELECT * FROM basededados WHERE contrato = '{}';".format(dados_planilha["contrato"])
+        CURSOR.execute(query)
+        registro_anterior = CURSOR.fetchall() 
         # VAMOS VERIFICAR SE ALGUM CAMPO DAQUELA LINHA FOI ALTERADO
-        for chave, valor in dados_planiha.items(): 
-           if chave == "contrato": continue
-           if valor != cursor.execute("SELECT %s FROM basedados WHERE %s", (chave, dados_planiha["contrato"])):
-                cursor.execute("""
-                    UPDATE basededados
-                    SET %s = %s
-                    WHERE contrato = %s
-                """, (chave, valor, dados_planiha["contrato"]))
+        for chave, valor in dados_planilha.items(): 
+            if chave == "contrato": continue
+            query = "SELECT {} FROM basededados WHERE contrato = '{}'"\
+                .format(chave, dados_planilha["contrato"])
+            CURSOR.execute(query)
+            resposta = CURSOR.fetchall()
+            resposta = resposta[0] if len(resposta) >= 1 else resposta
+            if chave == 'data_conexao': valor = converte_string_em_data(valor)
+            if valor != resposta[0]:
+                valor = dados_planilha[chave]
+                query = "UPDATE basededados SET {} = {} WHERE contrato = '{}'"\
+                    .format(chave, 
+                        f"'{valor}'" if valor is not None else 'NULL', dados_planilha["contrato"])
+                CURSOR.execute(query)
                 CONEXAO.commit()
-        if registro_anterior != cursor.execute("SELECT * FROM basededados"):
-            registros_atualizados[registro_anterior] = cursor.execute("""
-                    SELECT * FROM basededados
-                    WHERE contrato = %s""", (dados_planiha["contrato"],))
+        query = "SELECT * FROM basededados WHERE contrato = '{}'"\
+            .format(dados_planilha["contrato"])
+        CURSOR.execute(query)
+        registro_atual = CURSOR.fetchall()
+        registro_atual = registro_atual[0] if len(registro_atual) else registro_atual
+        if registro_anterior != registro_atual:
+            query = "SELECT * FROM basededados WHERE contrato = '{}'".format(dados_planilha["contrato"])
+            CURSOR.execute(query)
+            resposta = CURSOR.fetchall()
+            resposta = resposta[0] if len(resposta) >= 1 else resposta
+            registros_atualizados[resposta] = registro_anterior
     else:
-       # REGISTROS NOVOS, VAMOS GUARDÁ-LOS PARA VERIFICAR E DELETAR REGISTROS EXCLUÍDOS:
-        novos_contratos.append(dados_planiha["contrato"])
+        # REGISTROS NOVOS, VAMOS GUARDÁ-LOS PARA VERIFICAR E DELETAR REGISTROS EXCLUÍDOS
         query = "INSERT INTO basededados VALUES("
-        for valor in dados_planiha.values():
+        for valor in dados_planilha.values():
             if valor is None:
-               query += 'NULL, '
+                query += "NULL, "
             else:
-               query += f'{valor}, '
-        new_query = query[:len(query) - 1] + ')'
-           
+                query += remove_aspas_no_meio_da_string(valor) + ','
+        new_query = query[:len(query) - 1] + ');'
+        print(new_query)
+        CURSOR.execute(new_query)
+        CONEXAO.commit()
+    contratos.append(dados_planilha["contrato"])
     linha += 1
 
 
 # REGISTROS EXCLUIDOS
 registros_excluidos = []
-for contrato in cursor.execute("SELECT contrato FROM basededados"):
-    if contrato not in novos_contratos:
-        registros_excluidos.append(contrato)
-        cursor.execute("DELETE FROM basededados WHERE contrato = %s", (contrato,))
-        CONEXAO.commit()        
+query = "SELECT contrato FROM basededados"
+CURSOR.execute(query)
+resultados = CURSOR.fetchall()
+resultados = resultados[0] if len(resultados) >= 1 else resultados
+for contrato in resultados:
+    if contrato not in contratos:
+        query = 'SELECT * FROM basededados WHERE contrato = {}'\
+            .format(contrato)
+        CURSOR.execute(query)
+        resposta = CURSOR.fetchall()[0]
+        registros_excluidos.append(resposta)
+
+        query = 'DELETE FROM basededados WHERE contrato = {}'\
+            .format(contrato)
+        CURSOR.execute(query)
+        CONEXAO.commit()               
 
 print('Registros atualizados: ' + 20 * '=')
 for chave, valor in registros_atualizados.items():
-    print(f"Registro anterior: {chave}\n\n")
-    print(f"Registro atualizado: {valor}\n\n")
+    print(f"Registro anterior: {valor}\n\n")
+    print(f"Registro atualizado: {chave}\n\n")
     print(50 * '-')
 
 print('\n\nRegistros excluídos: ' + 20 * '=')
