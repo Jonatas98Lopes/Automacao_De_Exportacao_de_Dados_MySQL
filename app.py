@@ -86,6 +86,7 @@ linha = 2
 contratos = []
 registros_atualizados = {}
 
+
 # ATUALIZAÇÃO DE DADOS ALTERADOS:
 while linha <= sheet_data.max_row:
     
@@ -121,7 +122,8 @@ while linha <= sheet_data.max_row:
     query = "SELECT contrato FROM basededados"
     CURSOR.execute(query)
     resultados = CURSOR.fetchall()
-    if any(int(dados_planilha["contrato"]) in tupla for tupla in resultados):
+    if any(int(dados_planilha["contrato"]) 
+           in tupla for tupla in resultados) and dados_planilha["contrato"] is not None:
         # EM CASO, DE MUDANÇA, VAMOS EXIBIR O REGISTRO ANTERIOR
         query = "SELECT * FROM basededados WHERE contrato = '{}';".format(dados_planilha["contrato"])
         CURSOR.execute(query)
@@ -153,6 +155,8 @@ while linha <= sheet_data.max_row:
             resposta = CURSOR.fetchall()
             resposta = resposta[0] if len(resposta) >= 1 else resposta
             registros_atualizados[resposta] = registro_anterior
+    elif dados_planilha["contrato"] is None:
+        break
     else:
         # REGISTROS NOVOS, VAMOS GUARDÁ-LOS PARA VERIFICAR E DELETAR REGISTROS EXCLUÍDOS
         query = "INSERT INTO basededados VALUES("
