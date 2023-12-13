@@ -6,7 +6,7 @@ from random import randint
 import openpyxl
 import mysql.connector
 from datetime import datetime
-import pdb
+
 
 def pausar():
   """
@@ -48,7 +48,7 @@ def converte_string_em_data(string):
 
 # 1. ACESSO AO GOOGLE DRIVE E DOWNLOAD DA PLANILHA:
 
-""" LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
+LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
 
 browser = GoogleChrome()
 driver, wait = browser.get_driver(), browser.get_wait()
@@ -64,7 +64,7 @@ pausar()
 botoes_selecao = driver.find_elements(By.XPATH, '//div[@aria-label="Fazer download"]')
 botoes_selecao[2].click()
 repousar()
-driver.quit() """
+driver.quit()
 
 
 CONEXAO = mysql.connector.connect(
