@@ -4,7 +4,6 @@ from selenium.webdriver.support import expected_conditions
 from time import sleep
 from random import randint
 import openpyxl
-import mysql.connector
 from datetime import datetime
 from banco_de_dados import *
 
@@ -58,12 +57,8 @@ repousar()
 driver.quit() """
 
 
-CONEXAO = mysql.connector.connect(
-  user='root',
-  password='12345678',
-  host='localhost',
-  database='importacao_mysql'
-) 
+CONEXAO = abre_conexao_mysql('root', '12345678', 
+    'localhost', 'importacao_mysql')
 
 # 2. EXTRAINDO DADOS DA PLANILHA:
 
