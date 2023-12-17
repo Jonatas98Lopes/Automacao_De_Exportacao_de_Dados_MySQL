@@ -6,6 +6,7 @@ from random import randint
 import openpyxl
 import mysql.connector
 from datetime import datetime
+from banco_de_dados import *
 
 
 def pausar():
@@ -21,17 +22,7 @@ def repousar():
   Para o funcionamento do programa num intervalo de 20 a 25 segundos.
   """
   sleep(randint(20, 25))
-
-def remove_aspas_no_meio_da_string(dado):
-      novo_dado = ""
-      contador = 0
-      for caractere in dado:
-          if caractere == "'": 
-              novo_dado += ' '
-          else:
-              novo_dado += caractere
-      return f"'{novo_dado.strip()}'"    
-
+ 
             
 
 def converte_string_em_data(string):
@@ -48,7 +39,7 @@ def converte_string_em_data(string):
 
 # 1. ACESSO AO GOOGLE DRIVE E DOWNLOAD DA PLANILHA:
 
-LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
+""" LINK_GOOGLE_DRIVE = 'https://drive.google.com/drive/folders/1nJn1jdS69k78qC6HckwkkQAkFDUvDbxv'
 
 browser = GoogleChrome()
 driver, wait = browser.get_driver(), browser.get_wait()
@@ -64,17 +55,16 @@ pausar()
 botoes_selecao = driver.find_elements(By.XPATH, '//div[@aria-label="Fazer download"]')
 botoes_selecao[2].click()
 repousar()
-driver.quit()
+driver.quit() """
 
 
 CONEXAO = mysql.connector.connect(
   user='root',
   password='12345678',
   host='localhost',
-  database='Importacao_MySQL'
+  database='importacao_mysql'
 ) 
 
-CURSOR = CONEXAO.cursor()
 # 2. EXTRAINDO DADOS DA PLANILHA:
 
 workbook = openpyxl.load_workbook('Base de dados .xlsx')
@@ -82,12 +72,93 @@ sheet_data = workbook['data']
 linha = 2
 
 
-
 contratos = []
 registros_atualizados = {}
+while True:
+
+    dados_planilha = {
+        "contrato" : sheet_data[f'A{linha}'].value,
+        "nome" : sheet_data[f'B{linha}'].value,
+        "endereco" : sheet_data[f'C{linha}'].value,
+        "numero" : sheet_data[f'D{linha}'].value,
+        "complemento" : sheet_data[f'E{linha}'].value,
+        "bairro" : sheet_data[f'F{linha}'].value,
+        "cidade" : sheet_data[f'G{linha}'].value,
+        "regional" : sheet_data[f'H{linha}'].value,
+        "tipo_do_contrato" : sheet_data[f'I{linha}'].value,
+        "plano" : sheet_data[f'J{linha}'].value,
+        "adicionais" : sheet_data[f'K{linha}'].value,
+        "voz" : sheet_data[f'L{linha}'].value,
+        "valor_voz" : sheet_data[f'M{linha}'].value,
+        "valor_do_plano" : sheet_data[f'N{linha}'].value,
+        "valor_adicionais" : sheet_data[f'O{linha}'].value,
+        "valor_liquido_do_contrato" : sheet_data[f'P{linha}'].value,
+        "status" : sheet_data[f'Q{linha}'].value,
+        "data_conexao" : sheet_data[f'R{linha}'].value,
+        "vendedor" : sheet_data[f'S{linha}'].value,
+        "canal_de_vendas" : sheet_data[f'T{linha}'].value,
+        "codigo_os" : sheet_data[f'U{linha}'].value,
+        "area_de_despacho" : sheet_data[f'V{linha}'].value,
+        "equipe" : sheet_data[f'W{linha}'].value,
+        "operadora" : sheet_data[f'X{linha}'].value
+
+    }
+
+    if dados_planilha["contrato"] is None: break
+    insere_dados_no_banco_de_dados(CONEXAO, dados_planilha, 'basededados')
+    linha += 1
 
 
-# ATUALIZAÇÃO DE DADOS ALTERADOS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""" # ATUALIZAÇÃO DE DADOS ALTERADOS:
 while linha <= sheet_data.max_row:
     
     dados_planilha = {
@@ -190,7 +261,7 @@ for contrato in resultados:
         query = 'DELETE FROM basededados WHERE contrato = {}'\
             .format(contrato)
         CURSOR.execute(query)
-        CONEXAO.commit()               
+        CONEXAO.commit()      """          
 
 print('Registros atualizados: ' + 20 * '=')
 for chave, valor in registros_atualizados.items():
