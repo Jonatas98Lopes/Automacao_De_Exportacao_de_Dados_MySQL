@@ -200,7 +200,7 @@ def exclui_registro_do_banco_de_dados(CONEXAO, tabela, dados_planilha, condicao)
     executa_query(CONEXAO, query)
 
 
-def busca_registros_no_banco_de_dados(CONEXAO, tabela, campo, condicao=None):
+def busca_registros_no_banco_de_dados(CONEXAO, tabela, campo=None, condicao=None, dados_planilha=None):
     """
     Função que retorna todos os registros de um campo de uma tabela 
     de banco de dados MySQL.
@@ -212,21 +212,48 @@ def busca_registros_no_banco_de_dados(CONEXAO, tabela, campo, condicao=None):
     usuário, senha, host, e banco de dados do servidor MySQL a qual 
     seu programa se conectará.
 
+
     tabela: Nome da tabela na qual serão excluídos os dados.
     
-    campo: Campo do banco de dados que será retornado.
 
     Parâmetros opcionais:
+
+    campo: Campo do banco de dados que será retornado. Se não passado,
+    será retornado todos os campos da tabela.
+    
     condicao: Você pode especificar uma linha para retornar um valor
-    único. Caso não passado, seu valor será None
+    único. Caso não passado, será retornado todas as linhas da tabela.
+    OBS: A condição deve ser uma chave de dados_planilha.
+    
+    dados_planilha: Um dicionário contendo os dados que será usada 
+    para referenciar O VALOR DO ATRIBUTO na claúsula WHERE.
+    
+    OBS: Se você passar uma condicao na assinatura da função, você DEVE PASSAR
+    o dicionário contendo as chaves que referenciam a tabela.
+    Caso contrário, uma exceção será lançada.
     """
-    if condicao is None:
+    if campo is None and condicao is None:
+        query = f'SELECT * FROM {tabela}'
+
+    elif campo is None:
+        query = f'SELECT * FROM {tabela} WHERE {condicao} = {dados_planilha[condicao]} ;'
+        if dados_planilha is None:
+                raise Exception('Você passou a condição, mas' + \
+                    ' não especificou o dicionário que contém o valor da condição;')
+        
+    elif condicao is None:
         query = f'SELECT {campo} FROM {tabela};'
+
     else:
-        query = f'SELECT {campo} FROM {tabela} WHERE {condicao};'
+        query = f'SELECT {campo} FROM {tabela}' + \
+            f' WHERE {condicao} = {dados_planilha[condicao]} ;'
+        if dados_planilha is None:
+                raise Exception('Você passou a condição, mas' + \
+                    ' não especificou o dicionário que contém o valor da condição;')
+        
     CURSOR = executa_query(CONEXAO, query, dml=False)
     resposta = CURSOR.fetchall()
-    return resposta
+    return (resposta if len(resposta) > 1  or len(resposta) == 0 else resposta[0])
    
 
 
@@ -270,5 +297,5 @@ dados_planilha = {
 #    'basededados',"contrato")
 # exclui_registro_do_banco_de_dados(CONEXAO, 'basededados', 
 #    dados_planilha, "contrato")
-resposta = busca_registros_no_banco_de_dados(CONEXAO, 'basededados', 'contrato')
+resposta = busca_registros_no_banco_de_dados(CONEXAO, 'basededados')
 print(resposta)
